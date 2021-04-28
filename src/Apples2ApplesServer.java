@@ -10,8 +10,8 @@ public class Apples2ApplesServer{
     private ArrayList<PlayerHandler> players = new ArrayList<>();
     List<String> rndNames = new ArrayList<>(Arrays.asList("Isabelle", "Sharon", "Aminah", "Georgina", "Aidan", "Declan", "Oscar", "Raphael", "Robbie ", "Leroy"));
 
-    private GreenApplesDeck greenDeck;
-    private RedApplesDeck redDeck;
+    public GreenApplesDeck greenDeck;
+    public RedApplesDeck redDeck;
     private ArrayList<PlayedApple> playedApples = new ArrayList<>();
 
     private int judge = -1;
@@ -20,9 +20,9 @@ public class Apples2ApplesServer{
     private Random rnd;
 
     // GAME SETTINGS
-    private boolean voting = true;
-    private boolean wildRedApples = true;
-    private boolean applesAndPears = true; // Only works if voting is enabled
+    private boolean voting = false;
+    private boolean wildRedApples = false;
+    private boolean applesAndPears = false;     // Only works if voting is enabled
 
     public static void main(String[] args){
         if (args == null || args.length < 1 || args[0].equals("0")) {
@@ -30,14 +30,21 @@ public class Apples2ApplesServer{
             System.exit(0);
         }
 
-        new Apples2ApplesServer(Integer.parseInt(args[0]));
+        new Apples2ApplesServer(Integer.parseInt(args[0]), true);
     }
 
-    Apples2ApplesServer(int numOfOnlinePlayers){
+    Apples2ApplesServer(int numOfOnlinePlayers, boolean startGame){
         this.numOfOnlinePlayers = numOfOnlinePlayers;
+
+        if(startGame){
+            newGame();
+        }
+    }
+
+    public void newGame(){
         // Setup game
         setupCards();
-        startServer(2049, numOfOnlinePlayers);
+        addPlayers(2049, numOfOnlinePlayers);
 
         msgAllPlayers("Connected to server!\n");
         msgAllPlayers("Type 'exit' at any time to quit the game :)\n");
@@ -126,17 +133,17 @@ public class Apples2ApplesServer{
                 /* ------------- PHASE D ------------- */
 
                 // Clear the played apples and refill every players hand with new red apples
-                playedApples.clear();
+                clearPlayedApples();
                 refillPlayersHand();
 
                 showScoreboard();
                 sleep(3000);
 
                 // Show all players the winner if there is one and then end the game
-                if(checkWinner() > -1){
+                if(getWinner() > -1){
                     msgAllPlayers("-------- GAME OVER --------\n");
                     msgAllPlayers("THE WINNER IS...");
-                    msgAllPlayers(players.get(checkWinner()).getName());
+                    msgAllPlayers(players.get(getWinner()).getName());
                     // Message all players "end" to exit their running task
                     msgAllPlayers("end");
                     break;
@@ -150,12 +157,15 @@ public class Apples2ApplesServer{
         }catch(Exception e){
             endGame();
         }
-
     }
+
+    /* ------------- GETTERS ------------- */
 
     public ArrayList<PlayerHandler> getPlayers(){
         return players;
     }
+
+    public ArrayList<PlayedApple> getPlayedApples(){ return playedApples; }
 
     public int getJudge(){
         return judge;
@@ -169,10 +179,17 @@ public class Apples2ApplesServer{
         return voting;
     }
 
-    public void endGame(){
-        msgAllPlayers("end");
-        System.exit(0);
+    public String getCurrGreenApple(){
+        return currGreenApple;
     }
+
+    private String getRandomName(){
+        rnd = ThreadLocalRandom.current();
+        return rndNames.remove(rnd.nextInt(rndNames.size()));
+    }
+
+
+    /* ------------- GAME SETUP ------------- */
 
     public void setupCards(){
         greenDeck = new GreenApplesDeck();
@@ -184,7 +201,7 @@ public class Apples2ApplesServer{
         redDeck.shuffle();
     }
 
-    private void startServer(int port, int numOfOnlinePlayers){
+    public void addPlayers(int port, int numOfOnlinePlayers){
         ServerSocket aSocket = null;
         try {
             // Open a new socket
@@ -214,15 +231,9 @@ public class Apples2ApplesServer{
                 players.add(bot);
             }
         }
-
-        // Prints every player
-        System.out.println("Player list:");
-        for(PlayerHandler player: players){
-            System.out.println(player.getName());
-        }
     }
 
-    private void setNames() {
+    public void setNames() {
         msgAllPlayers("Type in your name or just press enter to get a random name:");
 
         // Create a threadpool so all players can chose a name simultaneously
@@ -268,6 +279,14 @@ public class Apples2ApplesServer{
         }
     }
 
+
+    /* ------------- OTHER ------------- */
+
+    public void endGame(){
+        msgAllPlayers("end");
+        System.exit(0);
+    }
+
     private void sleep(int milliSec){
         // Made this to avoid having to throw exceptions everywhere
         try{
@@ -275,7 +294,7 @@ public class Apples2ApplesServer{
         }catch (InterruptedException e){}
     }
 
-    private void msgAllPlayers(String msg){
+    public void msgAllPlayers(String msg){
         for(PlayerHandler player: players){
             if(!player.isBot){
                 player.msgPlayer(msg);
@@ -283,12 +302,10 @@ public class Apples2ApplesServer{
         }
     }
 
-    private String getRandomName(){
-        rnd = ThreadLocalRandom.current();
-        return rndNames.remove(rnd.nextInt(rndNames.size()));
-    }
 
-    private void newJudge(){
+    /* ------------- GAMEPLAY ------------- */
+
+    public void newJudge(){
         if(judge==-1){
             // Randomise which player starts as judge the first round
             rnd = ThreadLocalRandom.current();
@@ -360,7 +377,7 @@ public class Apples2ApplesServer{
         }
     }
 
-    private int judge(){
+    public int judge(){
         // First tell all players except the judge to wait for a decision
         for(int i=0; i<players.size(); i++){
             if(i != judge){
@@ -458,22 +475,27 @@ public class Apples2ApplesServer{
         return voteList.get(equalVotes).getKey();
     }
 
-    private void playCards(){
+    public void playCards(){
 
         int nThreads = (voting?players.size():players.size()-1);
-        System.out.println(nThreads);
+        //System.out.println(nThreads);
 
         // Create a threadpool so all players can pick their red apple at once
         ExecutorService threadpool = Executors.newFixedThreadPool(nThreads);
 
         for(int i=0; i<players.size(); i++) {
+            // Bots choices sometimes doesn't get stored because the process goes too fast
+            // so sleep is needed to ensure that every choice gets stored
+            sleep(50);
+
             if(i!=judge) {
                 PlayerHandler currentPlayer = players.get(i);
+                int answerBound = players.get(i).getHandSize();
                 //Make sure every player can answer at the same time
                 Runnable task = new Runnable() {
                     @Override
                     public void run() {
-                        int choice = currentPlayer.getPlayerChoice(6);
+                        int choice = currentPlayer.getPlayerChoice(answerBound);
                         choice = checkCardVariation(currentPlayer, choice);
                         PlayedApple nameAndCard = new PlayedApple(currentPlayer.getName(), currentPlayer.getCardFromHand(choice));
                         playedApples.add(nameAndCard);
@@ -495,12 +517,16 @@ public class Apples2ApplesServer{
         Collections.shuffle(playedApples, rnd);
     }
 
-    private void addPointTo(String name, String greenApple){
+    public void addPointTo(String name, String greenApple){
         for(PlayerHandler player: players){
             if(player.getName().equals(name)){
                 player.addPoint(greenApple);
             }
         }
+    }
+
+    public void clearPlayedApples(){
+        playedApples.clear();
     }
 
     public void refillPlayersHand(){
@@ -548,7 +574,7 @@ public class Apples2ApplesServer{
         return newChoice;
     }
 
-    private int checkWinner(){
+    private int getWinner(){
         // As the name says, it checks if there is a winner by checking the points
         int playerSize = players.size();
         int pointsToWin = 0;
@@ -575,7 +601,7 @@ public class Apples2ApplesServer{
         return winner;
     }
 
-    static class PlayedApple{
+    public class PlayedApple{
         public String playerName;
         public String redApple;
 

@@ -12,10 +12,8 @@ public class RedApplesDeck {
     private ArrayList<String> redApples;
     private Random rnd;
 
-    public RedApplesDeck(boolean wildCards, boolean applesAndPears){
+    public RedApplesDeck(){
         initDeck();
-        if(wildCards){ addCardVariation("[Wildcard] - Create your own card!", 200);}
-        if(applesAndPears){ addCardVariation("[Apples and Pears] - Play this card together with a red card to have the green card replaced.", 200);}
     }
 
     private void initDeck(){
@@ -27,7 +25,7 @@ public class RedApplesDeck {
         }
     }
 
-    private void addCardVariation(String cardName, int numOfCards){
+    public void addCardVariation(String cardName, int numOfCards){
         for(int i=0; i<numOfCards; i++){
             int rndInt = ThreadLocalRandom.current().nextInt(0, redApples.size());
             redApples.add(rndInt, cardName);
@@ -58,7 +56,7 @@ public class RedApplesDeck {
         return handArray;
     }
 
-    private void checkIfEmpty(){
+    public void checkIfEmpty(){
         if(redApples.isEmpty()){
             initDeck();
             shuffle();
@@ -67,5 +65,9 @@ public class RedApplesDeck {
 
     public int deckSize(){
         return redApples.size();
+    }
+
+    public ArrayList<String> getDeck(){
+        return redApples;
     }
 }

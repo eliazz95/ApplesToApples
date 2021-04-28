@@ -22,7 +22,6 @@ class GameTestWithOnlyBots {
     @Order(1)
     @DisplayName("Rule 1 | Read all green apples from file")
     void greenCardsShouldBeReadFromFile(){
-
         int deckSize = server.greenDeck.deckSize();
         assertEquals(614, deckSize);
     }
@@ -31,7 +30,6 @@ class GameTestWithOnlyBots {
     @Order(2)
     @DisplayName("Rule 2 | Read all red apples from file")
     void redCardsShouldBeReadFromFile(){
-        // Make sure to change the game settings to disable any card variation before doing this test
         int deckSize = server.redDeck.deckSize();
         assertEquals(1826, deckSize);
     }
@@ -45,6 +43,33 @@ class GameTestWithOnlyBots {
 
         // Check that the first green card is not equal to the first green card of an unshuffled deck
         assertNotEquals("[Absurd] - (ridiculous, senseless, foolish) ", server.greenDeck.drawCard());
+
+        // Also test the deck classes separately
+        GreenApplesDeck greenDeck = new GreenApplesDeck();
+        RedApplesDeck redDeck = new RedApplesDeck();
+
+        ArrayList<String> greenApples = greenDeck.getDeck();
+        ArrayList<String> redApples = redDeck.getDeck();
+        for(int i=0; i<10;i++){
+            System.out.println(greenApples.get(i));
+        }
+        greenDeck.shuffle();
+        redDeck.shuffle();
+        System.out.println("-----------------------");
+
+
+        ArrayList<String> shuffledGreenApples = greenDeck.getDeck();
+        ArrayList<String> shuffledRedApples = redDeck.getDeck();
+
+        for(int i=0; i<10;i++){
+            System.out.println(shuffledGreenApples.get(i));
+        }
+
+        boolean test = shuffledGreenApples.equals(greenApples);
+        boolean redDeckShuffled = redApples.equals(shuffledRedApples);
+
+        //assertFalse(test);
+        //assertFalse(redDeckShuffled);
     }
 
     @Test
@@ -176,7 +201,7 @@ class GameTestWithOnlyBots {
         int newJudge = server.getJudge();
 
         // Check if the current judge is the last player in list or not
-        if(currJudge == players.size()){
+        if(currJudge == players.size()-1){
             assertEquals(0, newJudge);
         }else{
             assertEquals(currJudge+1, newJudge);

@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 class GreenApplesDeck {
+
     private ArrayList<String> greenApples;
     private Random rnd;
 
@@ -24,7 +25,7 @@ class GreenApplesDeck {
         }
     }
 
-    private void addCardVariation(String cardName, int numOfCards){
+    public void addCardVariation(String cardName, int numOfCards){
         for(int i=0; i<numOfCards; i++){
             int rndInt = ThreadLocalRandom.current().nextInt(0, greenApples.size());
             greenApples.add(rndInt, cardName);
@@ -46,6 +47,10 @@ class GreenApplesDeck {
 
     public int deckSize(){
         return greenApples.size();
+    }
+
+    public ArrayList<String> getDeck(){
+        return greenApples;
     }
 
 }

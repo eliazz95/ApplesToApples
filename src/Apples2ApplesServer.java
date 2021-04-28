@@ -20,9 +20,7 @@ public class Apples2ApplesServer{
     private Random rnd;
 
     // GAME SETTINGS
-    private boolean voting = false;
-    private boolean wildRedApples = false;
-    private boolean applesAndPears = false;     // Only works if voting is enabled
+    private final boolean voting = false;
 
     public static void main(String[] args){
         if (args == null || args.length < 1 || args[0].equals("0")) {
@@ -44,6 +42,7 @@ public class Apples2ApplesServer{
     public void newGame(){
         // Setup game
         setupCards();
+        addCards();     // Adds card variations to decks
         addPlayers(2049, numOfOnlinePlayers);
 
         msgAllPlayers("Connected to server!\n");
@@ -193,16 +192,25 @@ public class Apples2ApplesServer{
 
     public void setupCards(){
         greenDeck = new GreenApplesDeck();
-        if(!voting){
-            applesAndPears = false;
+        redDeck = new RedApplesDeck();
+
+        greenDeck.shuffle();
+        redDeck.shuffle();
+    }
+
+    public void addCards(){
+        // Add card variations here
+        if(voting){
+            redDeck.addCardVariation("[Apples and Pears] - Play this card together with a red card to have the green card replaced.", 200);
         }
-        redDeck = new RedApplesDeck(wildRedApples, applesAndPears);
+        redDeck.addCardVariation("[Wildcard] - Create your own card!", 200);
+
         greenDeck.shuffle();
         redDeck.shuffle();
     }
 
     public void addPlayers(int port, int numOfOnlinePlayers){
-        ServerSocket aSocket = null;
+        ServerSocket aSocket;
         try {
             // Open a new socket
             aSocket = new ServerSocket(port);

@@ -14,7 +14,7 @@ class PlayerTest {
         Thread serverThread1 = new Thread(() -> {
             server = new Apples2ApplesServer(1,false);
             server.greenDeck = new GreenApplesDeck();
-            server.redDeck = new RedApplesDeck(false, false);
+            server.redDeck = new RedApplesDeck();
             server.addPlayers(2049, server.getNumOfOnlinePlayers());
             players = server.getPlayers();
             players.get(1).msgPlayer(server.greenDeck.drawCard());

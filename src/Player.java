@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class Player implements Runnable{
 
     private Socket aSocket;
-    private PrintWriter outToServer;
-    private BufferedReader inFromServer;
+    public PrintWriter outToServer;
+    public BufferedReader inFromServer;
     int port = 2049;
 
     public static void main(String[] args) {
@@ -14,21 +14,23 @@ public class Player implements Runnable{
             System.out.println("An ip address need to be specified...");
             System.exit(0);
         }
-        new Player(args[0]);
+        new Player(args[0], true);
     }
 
-    Player(String ipAddress){
+    Player(String ipAddress, boolean run){
         try {
             aSocket = new Socket(ipAddress, port);
             inFromServer = new BufferedReader(new InputStreamReader(aSocket.getInputStream()));
             outToServer = new PrintWriter(aSocket.getOutputStream(), true);
-            this.run();
+            if(run){
+                this.run();
+            }
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
 
-    private String takeInput() {
+    public String takeInput() {
         String input;
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -41,24 +43,38 @@ public class Player implements Runnable{
         return input;
     }
 
-    private void msgServer(String data) {
+    public String getServerData(){
+        String serverData = null;
+        try{
+            serverData = inFromServer.readLine();
+        }catch(IOException e){
+
+        }
+        return serverData;
+    }
+
+    public void msgServer(String data) {
         outToServer.println(data);
     }
 
     @Override
     public void run() {
-        String serverData;
+        String fromServer;
         try {
-            while ((serverData = inFromServer.readLine()) != null) {
-                if (serverData.startsWith("end")) {
+            while ((fromServer = getServerData()) != null) {
+                if (fromServer.startsWith("end")) {
                     System.exit(0);
                 }
-                System.out.println(serverData);// Server response
+                System.out.println(fromServer);// Print server response
 
-                if(serverData.endsWith(":")){
+                // If server sends a message ending with ":" then it expects a reply from the player
+                if(fromServer.endsWith(":")){
                     String input = takeInput();
+
                     if(input.contains("exit")){
-                        msgServer("end");
+                        // If the player types exit then message the server "end" to end the game
+                        //msgServer("end");
+
                         System.out.println("Goodbye!");
                         System.exit(0);
                     }

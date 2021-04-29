@@ -16,7 +16,6 @@ class GameTestWithOnlyBots {
         server = new Apples2ApplesServer(0, false);
         server.setupCards();
     }
-    //Player player = new Player("192.168.1.223");
 
     @Test
     @Order(1)
@@ -38,38 +37,19 @@ class GameTestWithOnlyBots {
     @Order(3)
     @DisplayName("Rule 3 | Shuffle both decks")
     void deckShouldBeShuffled(){
-        // Check that the first red card is not equal to the first red card of an unshuffled deck
-        assertNotEquals("[A Bad Haircut] - The perfect start to a bad hair day. ", server.redDeck.drawCard());
-
-        // Check that the first green card is not equal to the first green card of an unshuffled deck
-        assertNotEquals("[Absurd] - (ridiculous, senseless, foolish) ", server.greenDeck.drawCard());
-
-        // Also test the deck classes separately
         GreenApplesDeck greenDeck = new GreenApplesDeck();
         RedApplesDeck redDeck = new RedApplesDeck();
 
+        // Create new unshuffled decks
         ArrayList<String> greenApples = greenDeck.getDeck();
         ArrayList<String> redApples = redDeck.getDeck();
-        for(int i=0; i<10;i++){
-            System.out.println(greenApples.get(i));
-        }
-        greenDeck.shuffle();
-        redDeck.shuffle();
-        System.out.println("-----------------------");
 
+        // Compare new unshuffled decks with the shuffled decks created on the server
+        boolean greenApplesShuffled = greenApples.equals(server.greenDeck.getDeck());
+        boolean redApplesShuffled = redApples.equals(server.redDeck.getDeck());
 
-        ArrayList<String> shuffledGreenApples = greenDeck.getDeck();
-        ArrayList<String> shuffledRedApples = redDeck.getDeck();
-
-        for(int i=0; i<10;i++){
-            System.out.println(shuffledGreenApples.get(i));
-        }
-
-        boolean test = shuffledGreenApples.equals(greenApples);
-        boolean redDeckShuffled = redApples.equals(shuffledRedApples);
-
-        //assertFalse(test);
-        //assertFalse(redDeckShuffled);
+        assertFalse(greenApplesShuffled);
+        assertFalse(redApplesShuffled);
     }
 
     @Test
@@ -89,10 +69,8 @@ class GameTestWithOnlyBots {
     @Order(5)
     @DisplayName("Rule 5 | Randomise which player starts being the judge")
     void choseRandomJudge(){
-        /*
-        * Not actually gonna test the randomness but instead just gonna
-        * check if a judge is chosen among the number of players
-        */
+        // Not actually gonna test the randomness but instead just gonna
+        // check if a judge is chosen among the number of players
         assertEquals(-1, server.getJudge());
         server.newJudge();
         int currJudge = server.getJudge();
@@ -206,6 +184,55 @@ class GameTestWithOnlyBots {
         }else{
             assertEquals(currJudge+1, newJudge);
         }
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("Rule 14 | Keep score by keeping the green apples you've won")
+    void shouldGiveGreenApplePointsToPlayers(){
+        for(PlayerHandler player: players){
+            player.removeAllPoints();
+
+            String greenApple = server.greenDeck.drawCard();
+            player.addPoint(greenApple);
+
+            ArrayList<String> greenApplePoints = player.getGreenApples();
+
+            // Check that each player has got 1 point and check that the green apple matches the drawn card from deck
+            assertEquals(1, player.getPoints());
+            assertEquals(greenApple, greenApplePoints.get(0));
+        }
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("Rule 15 | Check if there is a winner")
+    void shouldReturnAWinner(){
+        // 4 players - 8 apples to win
+        // 5 players - 7 apples to win
+        // 6 players - 6 apples to win
+        // 7 players - 5 apples to win
+        // 8+ players - 4 apples to win
+        for(int i=0; i<4; i++){
+            players.get(0).removeAllPoints();
+            // Add points just below the win limit to the first player in list
+            for(int j=0; j<(7-i); j++){
+                players.get(0).addPoint(server.greenDeck.drawCard());
+            }
+            // Should return -1 as there isn't a winner yet
+            assertEquals(-1, server.getWinner());
+
+            // Add another point to the first player
+            players.get(0).addPoint(server.greenDeck.drawCard());
+
+            // Should return the first player in list as the winner
+            assertEquals(0, server.getWinner());
+
+            // Add another player to check the next win limit
+            PlayerHandler bot = new PlayerHandler("Bot " + server.getRandomName(), server.redDeck.getHand(false), true);
+            players.add(bot);
+        }
+
     }
 
 }

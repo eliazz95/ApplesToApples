@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -6,6 +7,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Apples2ApplesServer{
+
+    private ServerSocket aSocket;
 
     private ArrayList<PlayerHandler> players = new ArrayList<>();
     List<String> rndNames = new ArrayList<>(Arrays.asList("Isabelle", "Sharon", "Aminah", "Georgina", "Aidan", "Declan", "Oscar", "Raphael", "Robbie ", "Leroy"));
@@ -182,7 +185,7 @@ public class Apples2ApplesServer{
         return currGreenApple;
     }
 
-    private String getRandomName(){
+    public String getRandomName(){
         rnd = ThreadLocalRandom.current();
         return rndNames.remove(rnd.nextInt(rndNames.size()));
     }
@@ -210,7 +213,7 @@ public class Apples2ApplesServer{
     }
 
     public void addPlayers(int port, int numOfOnlinePlayers){
-        ServerSocket aSocket;
+
         try {
             // Open a new socket
             aSocket = new ServerSocket(port);
@@ -292,6 +295,11 @@ public class Apples2ApplesServer{
 
     public void endGame(){
         msgAllPlayers("end");
+        try{
+            aSocket.close();
+        }catch(IOException e){
+
+        }
         System.exit(0);
     }
 
@@ -582,14 +590,13 @@ public class Apples2ApplesServer{
         return newChoice;
     }
 
-    private int getWinner(){
-        // As the name says, it checks if there is a winner by checking the points
+    public int getWinner(){
         int playerSize = players.size();
         int pointsToWin = 0;
 
         // Check points to win depending on number of players
         if (playerSize < 5) {
-            pointsToWin = 1;
+            pointsToWin = 8;
         } else if (playerSize < 6) {
             pointsToWin = 7;
         } else if (playerSize < 7) {
@@ -600,6 +607,7 @@ public class Apples2ApplesServer{
             pointsToWin = 4;
         }
 
+        // Returns the winner if there is one and returns -1 if there isn't
         int winner = -1;
         for(int i=0; i<players.size(); i++){
             if(players.get(i).getPoints() == pointsToWin){

@@ -48,6 +48,14 @@ public class PlayerHandler {
         return greenApples.size();
     }
 
+    public void removeAllPoints(){
+        greenApples.clear();
+    }
+
+    public ArrayList<String> getGreenApples(){
+        return greenApples;
+    }
+
     public int getHandSize(){
         return hand.size();
     }
@@ -89,18 +97,6 @@ public class PlayerHandler {
             msgPlayer("["+i+"]   " + hand.get(i));
         }
     }
-
-    /*public void wildCard(int cardChoice){
-        // Checks if a wildcard has been played and asks the player of a new name and description
-        msgPlayer("Enter a name for your card:");
-        String newCard = "["+getPlayerInput()+"] - ";
-
-        msgPlayer("Good choice! Now enter a description:");
-        newCard += getPlayerInput();
-
-        msgPlayer("\nYour new card --> " + newCard);
-        replaceACard(cardChoice, newCard);
-    }*/
 
     public void msgPlayer(String msg){
         if(!isBot){
